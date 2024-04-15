@@ -1,4 +1,13 @@
-
+section {
+  margin-left: 20%;
+  margin-right: 20%;
+  margin-bottom: 25px;
+  border-style: solid;
+  border-width: 2%;
+  border-radius: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
 
 #top-nav-bar {
   margin-top: 10px;
@@ -17,11 +26,10 @@
   align-items: center;
   padding-left: 10px;
 }
-
+/* 
 #top-nav-bar #links {
   display: flex;
-  
-}
+} */
 
 #top-nav-bar > a {
   color: rgb(207, 207, 207);
