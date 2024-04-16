@@ -45,7 +45,7 @@ h3 {
 #side-bar {
   display: flex;
   flex-direction: column;
-  /* min-width: fit-content; */
+  min-width: fit-content;
   margin-left: 2%;
   margin-right: 2%;
   text-align: left;
