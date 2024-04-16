@@ -9,7 +9,7 @@ body {
 section {
   margin-bottom: 25px;
   border-style: solid;
-  border-width: 2px;
+  border-width: 1px;
   border-radius: 10px;
   padding-left: 10px;
   padding-right: 10px;
@@ -45,16 +45,22 @@ h3 {
 #side-bar {
   display: flex;
   flex-direction: column;
-  min-width: fit-content;
+  /* min-width: fit-content; */
   margin-left: 2%;
   margin-right: 2%;
   text-align: left;
 }
 
-#side-bar img {
+#side-bar .icon {
   height: 20px;
   width: auto;
   -webkit-filter: invert(100%);
+}
+
+#side-bar #pfp {
+  border-radius:50% 50% 50% 50%;
+  width: 150px;
+  height: 150px;
 }
 
 #side-bar a {
