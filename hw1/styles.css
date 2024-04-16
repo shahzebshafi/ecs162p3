@@ -3,6 +3,7 @@ body {
   background-color: rgb(21, 32, 43);
   color: rgb(228, 231, 232);
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin-top: 65px;
 }
 
 section {
@@ -27,31 +28,26 @@ h3 {
   top: 0;
   padding-top: 10px;
   z-index: 1;
+  margin-bottom: 10px;
 }
 
 #top-nav-bar p {
-  padding-left: 10px;
-}
-
-#headshot {
-  float: left;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  padding-left: 2%;
 }
 
 #site {
-  margin-top: 90px;
+  display: flex;
+  flex-direction: column;
   overflow: auto;
   max-width: 75%;
-  /* margin-left: 2%; */
 }
 
 #side-bar {
+  display: flex;
+  flex-direction: column;
   min-width: fit-content;
   margin-left: 2%;
   margin-right: 2%;
-  margin-top: 90px;
   text-align: left;
 }
 
@@ -78,6 +74,7 @@ h3 {
 }
 
 #side-bar li {
+  height: fit-content;
   padding-bottom: 10px;
 }
 
@@ -98,4 +95,17 @@ h3 {
 #gallery img:hover {
   transition: transform 1.5s;
   transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+
+  #site {
+    max-width: none;
+    margin-top: 2%;
+    margin-left: 2%;
+    margin-right: 2%;
+  }
 }
