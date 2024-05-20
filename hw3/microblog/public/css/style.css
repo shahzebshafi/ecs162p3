@@ -1,0 +1,53 @@
+/* style.css */
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: rgb(21, 32, 43);
+    color: #14171a;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: rgb(21, 32, 43);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+header ul li{
+    display: inline;
+    margin-left: 20px;
+}
+
+footer {
+    color: rgb(235, 235, 235);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    height: 40px;
+    margin-right: 10px;
+}
+
+.app-name {
+    font-size: 24px;
+    color: rgb(235, 235, 235);
+}
+
+.nav-link {
+    text-decoration: none;
+    color: rgb(235, 235, 235);
+    font-size: 16px;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+}
+
