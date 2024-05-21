@@ -98,11 +98,22 @@ footer {
 /* #################### HOME #################### */
 .content-container {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
+}
+
+.post-form {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.post-form input {
+    width: 100%;
+    display: block;
 }
 
 .posts-list {
-    width: 50%;
+    width: 40%;
     margin: auto;
 }
 

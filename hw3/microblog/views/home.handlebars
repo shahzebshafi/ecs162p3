@@ -10,9 +10,9 @@
             <h2>Create a new {{{postNeoType}}}</h2>
             <form action="/posts" method="POST">
                 <!-- title input field name = "title" -->
-                <input type="text" name="title" placeholder="Title" required>
+                <input type="text" id="title" name="title" placeholder="Title" required>
                 <!-- text area input field name = "content" -->
-                <input type="text" name="content" placeholder="Type here...">
+                <input type="text" id="content" name="content" placeholder="Type here...">
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
                     <button type="submit" class="post-button">Post</button>
