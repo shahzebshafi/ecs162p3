@@ -7,10 +7,12 @@
         <!-- show the create post form when logged in -->
         <section class="post-form">
             <!-- make a header here -->
+            <h2>Create a new {{{postNeoType}}}</h2>
             <form action="/posts" method="POST">
                 <!-- title input field name = "title" -->
+                <input type="text" name="title" placeholder="Title" required>
                 <!-- text area input field name = "content" -->
-
+                <input type="text" name="content" placeholder="Type here...">
                 <div class="form-actions">
                     <button type="button" class="emoji-button" onclick="toggleEmojiPanel()">😀</button>
                     <button type="submit" class="post-button">Post</button>
@@ -36,7 +38,7 @@
             {{/each}}
         </ul>
         {{else}}
-            <!-- no posts, oh no, what now? -->
+            <h2>No posts currently</h2>
         {{/if}}
     </section>
 </section>

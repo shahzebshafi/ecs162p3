@@ -120,3 +120,22 @@ footer {
     border: 1px solid rgba(255, 255, 255, .5);
     margin-bottom: 20px;
 }
+
+/* #################### PROFILE #################### */
+
+.profile-container {
+    display: flex;
+    justify-content: center;
+}
+
+.user-posts {
+    width: 50%;
+    margin: auto;
+}
+
+.user-posts ul {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

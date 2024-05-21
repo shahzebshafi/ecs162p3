@@ -8,6 +8,9 @@
     
     <section class="profile-info">
         <!-- user profile info -->
+        <h2>Your Profile</h2>
+        <p>Username: {{user.username}}</p>
+        <p>Member since: {{user.memberSince}}</p>
     </section>
 </div>
 
@@ -16,9 +19,9 @@
     <h2>Your {{{postNeoType}}}s</h2>
     
     <!-- you'll need to make this conditaionl and #each expression work -->
-    {{#if user.posts.length}}
+    {{#if posts.length}}
         <ul>
-            {{#each user.posts}}
+            {{#each posts}}
                 {{> post this}}
             {{/each}}
         </ul>
