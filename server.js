@@ -272,16 +272,11 @@ function logoutUser(req, res) {
 // Function to render the profile page
 function renderProfile(req, res) {
     const user = getCurrentUser(req);
-    const posts = getPosts()
-    for(let i = 0; i < posts.length; i++) {
-        if(posts[i].username !== user.username) {
-            posts.splice(i, 1);
-        }
-    }
+    const userPosts = posts.filter(post => post.username === user.username);
     if (!user) {
         return res.status(403).send('Forbidden');
     }
-    res.render('profile', {user, posts});
+    res.render('profile', {user, posts: userPosts});
 
 }
 
@@ -326,7 +321,7 @@ function addPost(title, content, user) {
         title,
         content,
         username: user.username,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toLocaleDateString(),
         likes: 0
     };
     posts.push(newPost);
