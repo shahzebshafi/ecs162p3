@@ -1,10 +1,11 @@
 /* style.css */
 
+/* #################### MAIN #################### */
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
+    font-family: Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     background-color: rgb(21, 32, 43);
-    color: #14171a;
+    color: rgb(235, 235, 235);
 }
 
 header {
@@ -14,7 +15,6 @@ header {
     align-items: center;
     padding: 10px 20px;
     background-color: rgb(21, 32, 43);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 header ul li{
@@ -22,32 +22,101 @@ header ul li{
     margin-left: 20px;
 }
 
-footer {
-    color: rgb(235, 235, 235);
-}
-
-.logo {
+header .logo {
     display: flex;
     align-items: center;
 }
 
-.header-logo {
+header .logo .header-logo {
     height: 40px;
     margin-right: 10px;
 }
 
-.app-name {
+header .logo .app-name {
     font-size: 24px;
     color: rgb(235, 235, 235);
 }
 
-.nav-link {
+header nav .nav-link {
     text-decoration: none;
     color: rgb(235, 235, 235);
     font-size: 16px;
 }
 
-.nav-link:hover {
+header nav .nav-link:hover {
     text-decoration: underline;
 }
 
+footer {
+
+    color: rgb(235, 235, 235);
+    text-align: center;
+}
+
+
+/* #################### LOGIN #################### */
+
+.login-register {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.login-register span{
+    text-decoration: underline;
+}
+
+.login-area, .register-area {
+    display: flex;
+    flex-direction: column;
+    width: 20%;
+}
+
+.login-register form {
+    display: flex;
+    flex-direction: column;
+}
+
+.login-register input {
+    padding: 15px 5px;
+    border-radius: 10px;
+    font-size: 125%;
+}
+
+.login-register button {
+    padding: 10px 5px;
+    border-radius: 10px;
+    font-size: 125%;
+    color: rgb(235, 235, 235);
+    background-color: rgb(13, 142, 228);
+}
+
+.login-register label, input, button {
+    margin-top: 15px;
+}
+
+/* #################### HOME #################### */
+.content-container {
+    display: flex;
+    justify-content: center;
+}
+
+.posts-list {
+    width: 50%;
+    margin: auto;
+}
+
+.posts-list ul {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* #################### POST #################### */
+
+.post {
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, .5);
+    margin-bottom: 20px;
+}

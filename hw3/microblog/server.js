@@ -75,7 +75,7 @@ app.use(
 // should be used in your template files. 
 // 
 app.use((req, res, next) => {
-    res.locals.appName = 'Readdit';
+    res.locals.appName = 'Reeeddit';
     res.locals.copyrightYear = 2024;
     res.locals.postNeoType = 'Post';
     res.locals.loggedIn = req.session.loggedIn || false;
@@ -175,16 +175,31 @@ let users = [
 // Function to find a user by username
 function findUserByUsername(username) {
     // TODO: Return user object if found, otherwise return undefined
+    return users.find((u) => u.username == username)
 }
 
 // Function to find a user by user ID
 function findUserById(userId) {
     // TODO: Return user object if found, otherwise return undefined
+    return users.find((u) => u.id == userId)
 }
 
 // Function to add a new user
 function addUser(username) {
     // TODO: Create a new user object and add to users array
+    d = new Date()
+    date = d.split("T")[0]
+    time = d.split("T")[1].substring(0,5)
+    
+    const newUser = {
+        id: users.length + 1,
+        username: username,
+        avatar_url: undefined,
+        memberSince: `${date} ${time}`
+    }
+
+    users.push(newUser)
+    return newUser
 }
 
 // Middleware to check if user is authenticated
@@ -200,6 +215,7 @@ function isAuthenticated(req, res, next) {
 // Function to register a user
 function registerUser(req, res) {
     // TODO: Register a new user and redirect appropriately
+
 }
 
 // Function to login a user
