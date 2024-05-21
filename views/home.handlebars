@@ -23,8 +23,10 @@
             </form>
 
             <div id="emoji-container" class="emoji-panel" style="display: none;">
+                <input type="text" id="emoji-search" oninput="searchEmojis()" placeholder="Search emojis...">
                 <!-- input field for the emoji search, use oninput="searchEmojis() -->
                 <!-- a div, id = "emoji-grid" -->
+                <div id="emoji-grid"></div>
             </div>
         </section>
     {{/if}}
@@ -65,6 +67,12 @@ function toggleEmojiPanel() {
 
     if(container.style.display === 'block' && allEmojis.length == 0){
         // go "Fetch" you some emojis and show them off with displayEmojies
+        fetch('https://emoji-api.com/emojis?access_key=7b132543b863df2b12fba49e6cc673a82a64ecbd')
+            .then(res => res.json())
+            .then(data => {
+                allEmojis = data;
+                displayEmojis(allEmojis);
+            });
     }
 }
 
@@ -87,10 +95,9 @@ function displayEmojis(emojis,limit=200) {
 
 function searchEmojis() {
     const searchTerm = document.getElementById('emoji-search').value.toLowerCase();
-    // array.filter takes a predicate
-    // use string.includes. 
+    
 
-    const filteredEmojis = allEmojis.filter(...);
+    const filteredEmojis = allEmojis.filter(emoji => emoji.slug.includes(searchTerm));
     
     displayEmojis(filteredEmojis);
 }
@@ -100,6 +107,8 @@ function insertEmoji(emoji) {
 
     // do this when you're doing getting the emoji on the form
     //
+    const textarea = document.querySelector('textarea[name="content"]');
+    textarea.value += emoji;
     textarea.focus();  // Keep focus on the textarea
 }
 </script>
