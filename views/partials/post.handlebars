@@ -1,0 +1,42 @@
+{{! Partial for a single post }}
+<div class="post">
+    <div class="post-avatar">
+        <!-- the user's avatar -->
+    </div>
+    <div class="post-content preserve-newlines">
+        <p>{{this.title}}</p>
+        <p>{{this.content}}</p>
+        <div class="post-status-bar">
+            <!-- everything that is shown in the status bar -->
+            <!-- Heart = ♥ -->
+            <!-- font awesome  trashcan = <i class="fas fa-trash-alt"> </i>-->
+            <button class="like-button" data-id="{{this.id}}">♥ <span class ="likes-count">{{this.likes}}</span></button>
+            <button class="delete-button" data-id="{{this.id}}"><i class="fas fa-trash-alt"></i></button>
+        </div>        
+    </div>
+</div>
+<script>
+
+function handleLikeClick(event) {
+
+    const postId = event.target.getAttribute('data-id');
+
+    fetch(`/like/${postId}`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            const likesCountElement = event.target.querySelector(`.like-count"]`);
+            likesCountElement.textContent = data.likes;
+        });
+}
+
+function handleDeleteClick(event) {
+
+    const postId = event.target.getAttribute('data-id');       
+
+    fetch(`/delete/${postId}`, { method: 'DELETE' })
+        .then(() => {
+            // Remove the post element from the DOM
+            event.target.closest('.post').remove();
+        });
+    }    
+</script>

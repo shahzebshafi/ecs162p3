@@ -1,0 +1,28 @@
+{{! Use the main layout }}
+{{!< main }}
+
+<div class="profile-container">
+    <div class="profile-avatar"> 
+    </div>
+    
+    <section class="profile-info">
+        <h1>{{user.name}}</h1>
+    </section>
+</div>
+
+<section class="user-posts">
+    <!-- you can call posts tweets, or truths, or whatever, these are neologisms. Choose your own new in server.js -->
+    
+    <!-- you'll need to make this conditaionl and #each expression work -->
+    {{#if posts.length}}
+    <ul>
+        {{#each posts}}
+            {{> post this user=../user}}
+        {{/each}}
+    </ul>
+    
+    {{else}}
+        <!-- fix this up with some helper functions and other handlebars expressions, or add you own character -->
+        <p>You have not posted yet, poster.</p>
+    {{/if}}
+</section>
