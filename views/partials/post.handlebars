@@ -10,33 +10,27 @@
             <!-- everything that is shown in the status bar -->
             <!-- Heart = ♥ -->
             <!-- font awesome  trashcan = <i class="fas fa-trash-alt"> </i>-->
-            <button class="like-button" data-id="{{this.id}}">♥ <span class ="likes-count">{{this.likes}}</span></button>
-            <button class="delete-button" data-id="{{this.id}}"><i class="fas fa-trash-alt"></i></button>
+            <button class="like-button" data-id="{{this.id}}" onclick="handleLikeClick(event)">♥ <span class ="likes-count">{{this.likes}}</span></button>
+            <button class="delete-button" data-id="{{this.id}}" onclick="handleDeleteClick(event)"><i class="fas fa-trash-alt"></i></button>
         </div>        
     </div>
 </div>
 <script>
+    function handleLikeClick(event) {
 
-function handleLikeClick(event) {
+        const postId = event.target.getAttribute('data-id');
+        fetch(`/like/${postId}`, { method: 'POST'})
+            .then(res => res.json())
+    }
 
-    const postId = event.target.getAttribute('data-id');
+    function handleDeleteClick(event) {
+        const buttonElement = event.target.closest('.delete-button');
+        const postId = event.target.getAttribute('data-id');       
 
-    fetch(`/like/${postId}`, { method: 'POST' })
-        .then(response => response.json())
-        .then(data => {
-            const likesCountElement = event.target.querySelector(`.like-count"]`);
-            likesCountElement.textContent = data.likes;
-        });
-}
-
-function handleDeleteClick(event) {
-
-    const postId = event.target.getAttribute('data-id');       
-
-    fetch(`/delete/${postId}`, { method: 'DELETE' })
-        .then(() => {
-            // Remove the post element from the DOM
-            event.target.closest('.post').remove();
-        });
-    }    
+        fetch(`/delete/${postId}`, { method: 'POST' })
+            .then(() => {
+                // Remove the post element from the DOM
+                event.target.closest('.post').remove();
+            });
+        }    
 </script>

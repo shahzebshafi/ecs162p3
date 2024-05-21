@@ -160,6 +160,7 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
     const loggedIn = req.session.loggedIn;
     const postId = req.params.id;
     let postIndex = posts.findIndex(post => post.id === parseInt(postId));
+    console.log(postIndex)
     
     if(loggedIn === false) {
         return res.redirect('/login');
@@ -171,8 +172,7 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
     { 
         posts.splice(postIndex, 1);
         res.send('Post deleted');
-}
-
+    }
 });
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,7 +189,7 @@ app.listen(PORT, () => {
 
 // Example data for posts and users
 let posts = [
-    { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 0 },
+    { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 1 },
     { id: 2, title: 'Another Post', content: 'This is another sample post.', username: 'AnotherUser', timestamp: '2024-01-02 12:00', likes: 0 },
 ];
 let users = [
@@ -376,7 +376,4 @@ function generateAvatar(letter, width = 100, height = 100) {
     context.fillText(letter.toUpperCase(), width / 2, height / 2);
 
     return canvas.toBuffer();
-    
-
-
 }

@@ -18,6 +18,7 @@ header {
 }
 
 header ul li{
+    vertical-align: middle;
     display: inline;
     margin-left: 20px;
 }
@@ -47,12 +48,16 @@ header nav .nav-link:hover {
     text-decoration: underline;
 }
 
-footer {
+header .header-avatar {
+    border-radius: 50%;
+    width: 50px;
+    height: auto;
+}
 
+footer {
     color: rgb(235, 235, 235);
     text-align: center;
 }
-
 
 /* #################### LOGIN #################### */
 
@@ -101,9 +106,13 @@ footer {
     justify-content: center;
 }
 
+.post-form {
+    margin: 0 auto;
+}
+
 .posts-list {
     width: 50%;
-    margin: auto;
+    margin: 0 auto;
 }
 
 .posts-list ul {
