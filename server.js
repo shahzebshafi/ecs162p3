@@ -162,6 +162,12 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
     let postIndex = posts.findIndex(post => post.id === parseInt(postId));
     console.log(postIndex)
     
+    for(let i = 0; i < posts.length; i++) {
+        if(posts[i].id === parseInt(postId)) {
+            postIndex = i;
+        }
+    }
+    
     if(loggedIn === false) {
         return res.redirect('/login');
     }
@@ -321,7 +327,7 @@ function addPost(title, content, user) {
         content,
         username: user.username,
         timestamp: new Date().toISOString(),
-        likes: 0,
+        likes: 0
     };
     posts.push(newPost);
     return newPost;
