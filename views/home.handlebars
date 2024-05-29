@@ -33,6 +33,8 @@
 
     <section class="posts-list">
         <!-- recent posts -->
+       <a href = "/" <button id ="recent-post">Recent Posts</button></a>
+        <a href = "/popular"<button id ="popular-post">Popular Posts</button></a>
 
         {{#if posts.length}}
         <ul>
@@ -112,4 +114,13 @@ function insertEmoji(emoji) {
     textarea.focus();  // Keep focus on the textarea
 }
 </script>
+
+<script>
+document.getElementById("popular-post").addEventListener("click", function(){
+    fetch('/posts/popular')
+    .then(res => res.json())
+    });
+
+</script>
+
 

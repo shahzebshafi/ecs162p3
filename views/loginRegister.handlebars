@@ -29,5 +29,13 @@
             <input type="text" id="username" name="username" required><br>
             <button type="submit">Register</button>
         </form>
+        
     </section>
+     <section class = "Google-Area">
+        <h2>Log in with Google OAuth</h2>
+        <!-- errors will appear here -->
+        {{#if regError}}
+            <p style="color: red;">{{regError}}</p>
+        {{/if}}
+       <a href="/auth/google">Login with Google</a>
 </section>

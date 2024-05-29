@@ -3,13 +3,24 @@ const expressHandlebars = require('express-handlebars');
 const session = require('express-session');
 const canvas = require('canvas');
 const { createCanvas } = require('canvas');
+const sqlite3 = require('sqlite3');
+const sqlite = require('sqlite');
+const { google } = require('googleapis');
+const { OAuth2Client } = require('google-auth-library');
+require('dotenv').config();
+const path = require('path');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
+const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,11 +107,53 @@ app.use(express.json());                            // Parse JSON bodies (as sen
 // We pass the posts and user variables into the home
 // template
 //
+
 app.get('/', (req, res) => {
     const posts = getPosts();
     const user = getCurrentUser(req) || {};
     res.render('home', { posts, user });
+
 });
+
+// Redirect to Google's OAuth 2.0 server
+app.get('/auth/google', (req, res) => {
+    const url = client.generateAuthUrl({
+        access_type: 'offline',
+        scope: ['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
+    });
+    res.redirect(url);
+});
+
+// Handle OAuth 2.0 server response
+app.get('/auth/google/callback', async (req, res) => {
+    const { code } = req.query;
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({
+        auth: client,
+        version: 'v2',
+    });
+
+    const userinfo = await oauth2.userinfo.get();
+    //res.send(`
+     //   <h1>Hello, ${userinfo.data.name}</h1>
+     //   <p>Email: ${userinfo.data.email}</p>
+      //  <img src="${userinfo.data.picture}" alt="Profile Picture">
+      //  <br>
+      //  <a href="/logout">Logout from App</a>
+      //  <br>
+    //`);
+    let user = findUserByUsername(userinfo.data.email);
+    if (!user) {
+        user = addUser(userinfo.data.email);
+    }
+    req.session.loggedIn = true;
+    req.session.userId = user.id;
+    res.redirect('/profile');
+});
+
+
 
 // Register GET route is used for error response from registration
 //
@@ -154,6 +207,14 @@ app.post('/login', (req, res) => {
 app.get('/logout', (req, res) => {
     logoutUser(req, res);
 });
+
+app.get('/popular', (req, res) => {
+    const posts = getPopularPosts();
+    const user = getCurrentUser(req) || {};
+    res.render('home', { posts, user });
+});
+
+
 app.post('/delete/:id', isAuthenticated, (req, res) => {
     // TODO: Delete a post if the current user is the owner
     const user = getCurrentUser(req);
@@ -186,12 +247,15 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Support Functions and Variables
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 
 // Example data for posts and users
 let posts = [
@@ -312,6 +376,10 @@ function getCurrentUser(req) {
 // Function to get all posts, sorted by latest first
 function getPosts() {
     return posts.slice().reverse();
+}
+
+function getPopularPosts() {
+    return posts.sort((a, b) => b.likes - a.likes);
 }
 
 // Function to add a new post
