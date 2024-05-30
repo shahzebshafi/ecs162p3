@@ -202,7 +202,7 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/popular', async (req, res) => {
-    const posts = getPopularPosts();
+    const posts = await getPopularPosts();
     const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
 });
@@ -414,7 +414,7 @@ async function getPosts() {
 async function getPopularPosts() {
     try {
         const db = await connectDB()
-        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC")
+        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC, id DESC")
         return posts
     } catch (e) {
         console.log("getPopularPosts error ", e)
