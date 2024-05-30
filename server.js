@@ -11,6 +11,7 @@ require('dotenv').config();
 const path = require('path');
 const dbFileName = 'storage.db'
 const bcrypt = require('bcrypt');
+const fs = require('fs')
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -112,7 +113,7 @@ app.use(express.json());                            // Parse JSON bodies (as sen
 
 app.get('/', async (req, res) => {
     const posts = await getPosts();
-    const user = getCurrentUser(req) || {};
+    const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
 
 });
@@ -140,7 +141,7 @@ app.get('/auth/google/callback', async (req, res) => {
     const userinfo = await oauth2.userinfo.get();
 
     let hash = await bcrypt.hash(userinfo.data.email, 10)
-    let user = await findUserByHash(userinfo.data.email);
+    let user = await findUserByEmail(userinfo.data.email);
 
     if (!user) {
         user = await addUser(userinfo.data.email, hash);
@@ -214,17 +215,9 @@ app.get('/popular', async (req, res) => {
 
 
 app.post('/delete/:id', isAuthenticated, async (req, res) => {
-    // TODO: Delete a post if the current user is the owner
     const user = await getCurrentUser(req);
     const loggedIn = req.session.loggedIn;
     const postId = req.params.id;
-    //let postIndex = posts.findIndex(post => post.id === parseInt(postId));
-    
-    //for(let i = 0; i < posts.length; i++) {
-    //    if(posts[i].id === parseInt(postId)) {
-    //        postIndex = i;
-    //    }
-    //}
 
     if(loggedIn === false) {
         return res.redirect('/login');
@@ -280,7 +273,7 @@ async function findUserByUsername(username) {
     }
 }
 
-async function findUserByHash(email) {
+async function findUserByEmail(email) {
     try {
         const db = await connectDB()
         const users = await db.all("SELECT * FROM users")
@@ -412,6 +405,14 @@ async function handleAvatar(req, res) {
         return res.status(404).send('User not found');
     }
     const avatar = generateAvatar(username[0]);
+    const avatarPath = path.join(__dirname, '/public', '/images', `/${username}.png`)
+    const avatarUrl = `images/${username}.png`
+
+    fs.writeFileSync(avatarPath, avatar)
+
+    const db = await connectDB()
+    db.run("UPDATE users SET avatar_url = ? WHERE username = ?", [avatarUrl, username])
+
     res.set('Content-Type', 'image/png');
     res.send(avatar);
 }
@@ -436,7 +437,7 @@ async function getPosts() {
 async function getPopularPosts() {
     try {
         const db = await connectDB()
-        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC")
+        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC, id DESC")
         return posts
     } catch (e) {
         console.log("getPopularPosts error ", e)
@@ -468,13 +469,6 @@ async function addPost(title, content, user) {
 
 // Function to generate an image avatar
 function generateAvatar(letter, width = 100, height = 100) {
-    // TODO: Generate an avatar image with a letter
-    // Steps:
-    // 1. Choose a color scheme based on the letter
-    // 2. Create a canvas with the specified width and height
-    // 3. Draw the background color
-    // 4. Draw the letter in the center
-    // 5. Return the avatar as a PNG buffer
     const canvas = createCanvas(width, height);
     const context = canvas.getContext('2d');
     const colors ={
