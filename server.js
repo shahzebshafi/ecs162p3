@@ -10,6 +10,7 @@ const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 const path = require('path');
 const dbFileName = 'storage.db'
+const bcrypt = require('bcrypt');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -202,7 +203,7 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/popular', async (req, res) => {
-    const posts = await getPopularPosts();
+    const posts = getPopularPosts();
     const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
 });
@@ -213,25 +214,34 @@ app.post('/delete/:id', isAuthenticated, async (req, res) => {
     const user = await getCurrentUser(req);
     const loggedIn = req.session.loggedIn;
     const postId = req.params.id;
-    let postIndex = posts.findIndex(post => post.id === parseInt(postId));
+    //let postIndex = posts.findIndex(post => post.id === parseInt(postId));
     
-    for(let i = 0; i < posts.length; i++) {
-        if(posts[i].id === parseInt(postId)) {
-            postIndex = i;
-        }
-    }
-    
+    //for(let i = 0; i < posts.length; i++) {
+    //    if(posts[i].id === parseInt(postId)) {
+    //        postIndex = i;
+    //    }
+    //}
+
     if(loggedIn === false) {
         return res.redirect('/login');
     }
-    else if(posts[postIndex].username !== user.username) {
+
+    const db = await connectDB();
+    const post = await db.get("SELECT * FROM posts WHERE id = ?", [postId]);
+    
+    if(!post){
+        return res.status(404).send('Post not found');
+    }
+
+    if(post.username !== user.username){
         return res.status(403).send('Forbidden');
     }
-    else
-    { 
-        posts.splice(postIndex, 1);
-        res.send('Post deleted');
-    }
+
+    await db.run("DELETE FROM posts WHERE id = ?", [postId]);
+
+    res.send('Post deleted');
+  
+   
 });
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -328,23 +338,31 @@ async function registerUser(req, res) {
     if (!username) {
         return res.redirect('/register?error=Username is required');
     }
-    const existingUser = findUserByUsername(username);
+    const db = await connectDB();
+    const existingUser = await db.get("SELECT * FROM users WHERE username = ?", [username]);
+
     if (existingUser) {
         return res.redirect('/register?error=User already exists');
     }
-    const newUser = addUser(username);
+    const { count } = await db.get("SELECT COUNT(*) as count FROM users");
+    const newCount = count + 1;
+    const hashedID = await bcrypt.hash(newCount, 10)
+
+
+    const newUser = await addUser(username, hashedID);
     req.session.userId = newUser.id;
     req.session.loggedIn = true;
     res.redirect('/');
 }
 
 // Function to login a user
-function loginUser(req, res) {
+async function loginUser(req, res) {
     const {username} = req.body;
     if (!username) {
         return res.redirect('/login?error=Username is required');
     }
-    const user = findUserByUsername(username);
+    const db = await connectDB();
+    const user = await db.get("SELECT * FROM users WHERE username = ?", [username]);
     if (!user) {
         return res.redirect('/login?error=User not found');
     }
@@ -363,22 +381,29 @@ function logoutUser(req, res) {
 // Function to render the profile page
 async function renderProfile(req, res) {
     const user = await getCurrentUser(req);
+    const db = await connectDB();
 
-    const userPosts = posts.filter(post => post.username === user.username);
+    //const userPosts = posts.filter(post => post.username === user.username);
     if (!user) {
         return res.status(403).send('Forbidden');
     }
+
+    const userPosts = await db.all("SELECT * FROM posts WHERE username = ?", [user.username]);
     res.render('profile', {user, posts: userPosts});
 }
 
 // Function to update post likes
-function updatePostLikes(req, res) {
-   const postId = req.params.id;
-    const post = posts.find(post => post.id === parseInt(postId));
+async function updatePostLikes(req, res) {
+    const postId = req.params.id;
+    const db = await connectDB();
+    //const post = posts.find(post => post.id === parseInt(postId));
+    await db.run("UPDATE posts SET likes = likes + 1 WHERE id = ?", [postId]);
+
+    const post = await db.get("SELECT * FROM posts WHERE id = ?", [postId]);
     if (!post) {
         return res.status(404).send('Post not found');
     }
-    post.likes += 1;
+    //post.likes += 1;
     res.json({ likes: post.likes });
 }
 
@@ -414,7 +439,7 @@ async function getPosts() {
 async function getPopularPosts() {
     try {
         const db = await connectDB()
-        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC, id DESC")
+        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC")
         return posts
     } catch (e) {
         console.log("getPopularPosts error ", e)
