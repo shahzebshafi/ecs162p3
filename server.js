@@ -9,7 +9,6 @@ const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 const path = require('path');
-const { error } = require('console');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -22,8 +21,6 @@ const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = 'http://localhost:3000/auth/google/callback';
 const client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, REDIRECT_URI);
-
-const dbFileName = 'storage.db';
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -139,16 +136,21 @@ app.get('/auth/google/callback', async (req, res) => {
     });
 
     const userinfo = await oauth2.userinfo.get();
-    // console.log(userinfo.data)
-    const hashedId = userinfo.data.id
-
+    //res.send(`
+     //   <h1>Hello, ${userinfo.data.name}</h1>
+     //   <p>Email: ${userinfo.data.email}</p>
+      //  <img src="${userinfo.data.picture}" alt="Profile Picture">
+      //  <br>
+      //  <a href="/logout">Logout from App</a>
+      //  <br>
+    //`);
     let user = findUserByUsername(userinfo.data.email);
     if (!user) {
-        user = addUser(userinfo.data);
+        user = addUser(userinfo.data.email);
     }
     req.session.loggedIn = true;
     req.session.userId = user.id;
-    res.redirect('/');
+    res.redirect('/profile');
 });
 
 
@@ -219,7 +221,7 @@ app.post('/delete/:id', isAuthenticated, (req, res) => {
     const loggedIn = req.session.loggedIn;
     const postId = req.params.id;
     let postIndex = posts.findIndex(post => post.id === parseInt(postId));
-    // console.log(postIndex)
+    console.log(postIndex)
     
     for(let i = 0; i < posts.length; i++) {
         if(posts[i].id === parseInt(postId)) {
@@ -253,65 +255,38 @@ app.listen(PORT, () => {
 // Support Functions and Variables
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+
 // Example data for posts and users
 let posts = [
     { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 0 },
     { id: 2, title: 'Another Post', content: 'This is another sample post.', username: 'AnotherUser', timestamp: '2024-01-02 12:00', likes: 0 },
 ];
 let users = [
-    { id: 1, username: 'SampleUser', hashedGoogleId: 'hash1', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
-    { id: 2, username: 'AnotherUser', hashedGoogleId: 'hash2', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
+    { id: 1, username: 'SampleUser', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
+    { id: 2, username: 'AnotherUser', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
 ];
 
 // Function to find a user by username
-async function findUserByUsername(username) {
-    try {
-        const db = await connectDB()
-        const user = await db.get('SELECT * FROM users WHERE username = ?', [username])
-        // console.log(`finduserbyusername: `, user)
-        return user 
-    } catch (e) {
-        console.log(`Error finding user by username ${username}: ${e}`)
-    }
+function findUserByUsername(username) {
+    return users.find(user => user.username === username);
 }
 
 // Function to find a user by user ID
-async function findUserById(userId) {
-    try {
-        const db = await connectDB()
-        const user = await db.get("SELECT * FROM users WHERE id = ?", [userId])
-        console.log('found user by id?: ', user)
-        return user
-    } catch (e) {
-        console.log("Error finding user by id ", userId, e)
-    }
+function findUserById(userId) {
+    return users.find(user => user.id === userId);
 }
 
 // Function to add a new user
-async function addUser(user) {
-    try {
-        const db = await connectDB()
-        const users = await db.all('SELECT * FROM users')
-        const newUser = { 
-                            id: users.length + 1, 
-                            username: user.email, 
-                            hashedGoogleId: user.id, 
-                            avatar_url: undefined, 
-                            memberSince: new Date().toISOString() 
-                        };
-        await db.run(
-            'INSERT INTO users (username, hashedGoogleId, avatar_url, memberSince) VALUES(?, ?, ?, ?)',
-            [newUser.username, newUser.hashedGoogleId, newUser.avatar_url, newUser.memberSince]
-        )
-        return newUser;
-    } catch (e) {
-        console.log(`ERROR adding user: ${e}`)
-    }
+function addUser(username) {
+    const newUser = { id: users.length + 1, username, avatar_url: undefined, memberSince: new Date().toISOString() };
+    users.push(newUser);
+    return newUser;
 }
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
-    // console.log(req.session.userId);
+    console.log(req.session.userId);
     if (req.session.userId) {
         next();
     } else {
@@ -341,7 +316,7 @@ function loginUser(req, res) {
     if (!username) {
         return res.redirect('/login?error=Username is required');
     }
-    const user = await findUserByUsername(username);
+    const user = findUserByUsername(username);
     if (!user) {
         return res.redirect('/login?error=User not found');
     }
@@ -395,8 +370,7 @@ function handleAvatar(req, res) {
 // Function to get the current user from session
 function getCurrentUser(req) {
     const userId = req.session.userId;
-    console.log("getcurretuser userid ", userId)
-    return findUserById(userId)
+    return findUserById(userId);
 }
 
 // Function to get all posts, sorted by latest first
@@ -409,26 +383,17 @@ function getPopularPosts() {
 }
 
 // Function to add a new post
-async function addPost(title, content, user) {
-    try {
-        const db = await connectDB()
-        const posts = await db.all("SELECT * FROM posts")
-        const newPost = {
-            id: posts.length + 1,
-            title,
-            content,
-            username: user.username,
-            timestamp: new Date().toLocaleDateString(),
-            likes: 0
-        };
-        await db.run(
-            "INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)",
-            [newPost.title, newPost.content, newPost.username, newPost.timestamp, newPost.likes]
-        )
-        return newPost;
-    } catch (e) {
-        console.log("Error adding post: ", e)
-    }
+function addPost(title, content, user) {
+    const newPost = {
+        id: posts.length + 1,
+        title,
+        content,
+        username: user.username,
+        timestamp: new Date().toLocaleDateString(),
+        likes: 0
+    };
+    posts.push(newPost);
+    return newPost;
 }
 
 // Function to generate an image avatar
@@ -481,63 +446,3 @@ function generateAvatar(letter, width = 100, height = 100) {
 
     return canvas.toBuffer();
 }
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// SQLite Database Functions
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-async function connectDB() {
-    try {
-        const db = await sqlite.open({ filename: dbFileName, driver: sqlite3.Database });
-        console.log(`Connected to ${dbFileName} successfully`)
-        return db
-    }
-    catch (e) {
-        console.log(`Caught error ${e} trying to connect to ${dbFileName}`)
-    }
-}
-
-async function initializeDB() {
-    const db = await connectDB()
-
-    await db.exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            hashedGoogleId TEXT NOT NULL UNIQUE,
-            avatar_url TEXT,
-            memberSince DATETIME NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            content TEXT NOT NULL,
-            username TEXT NOT NULL,
-            timestamp DATETIME NOT NULL,
-            likes INTEGER NOT NULL
-        );
-    `);
-
-    // // Insert sample data into the database
-    // await Promise.all(users.map(user => {
-    //     return db.run(
-    //         'INSERT INTO users (username, hashedGoogleId, avatar_url, memberSince) VALUES (?, ?, ?, ?)',
-    //         [user.username, user.hashedGoogleId, user.avatar_url, user.memberSince]
-    //     );
-    // }));
-
-    // await Promise.all(posts.map(post => {
-    //     return db.run(
-    //         'INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)',
-    //         [post.title, post.content, post.username, post.timestamp, post.likes]
-    //     );
-    // }));
-
-    // console.log('Database populated with initial data.');
-    // await db.close();
-}
-
-initializeDB().catch(err => {
-    console.error('Error initializing database:', err);
-});
