@@ -9,6 +9,7 @@ const { google } = require('googleapis');
 const { OAuth2Client } = require('google-auth-library');
 require('dotenv').config();
 const path = require('path');
+const dbFileName = 'storage.db'
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Configuration and Setup
@@ -108,8 +109,8 @@ app.use(express.json());                            // Parse JSON bodies (as sen
 // template
 //
 
-app.get('/', (req, res) => {
-    const posts = getPosts();
+app.get('/', async (req, res) => {
+    const posts = await getPosts();
     const user = getCurrentUser(req) || {};
     res.render('home', { posts, user });
 
@@ -136,17 +137,9 @@ app.get('/auth/google/callback', async (req, res) => {
     });
 
     const userinfo = await oauth2.userinfo.get();
-    //res.send(`
-     //   <h1>Hello, ${userinfo.data.name}</h1>
-     //   <p>Email: ${userinfo.data.email}</p>
-      //  <img src="${userinfo.data.picture}" alt="Profile Picture">
-      //  <br>
-      //  <a href="/logout">Logout from App</a>
-      //  <br>
-    //`);
-    let user = findUserByUsername(userinfo.data.email);
+    let user = await findUserByUsername(userinfo.data.email);
     if (!user) {
-        user = addUser(userinfo.data.email);
+        user = addUser(userinfo.data.email, userinfo.data.id);
     }
     req.session.loggedIn = true;
     req.session.userId = user.id;
@@ -182,15 +175,15 @@ app.get('/post/:id', (req, res) => {
     }
     res.render('postDetail', { post });
 });
-app.post('/posts', (req, res) => {
-    addPost(req.body.title, req.body.content, getCurrentUser(req));
+app.post('/posts', async (req, res) => {
+    addPost(req.body.title, req.body.content, await getCurrentUser(req));
     res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
     updatePostLikes(req, res);
 });
-app.get('/profile', isAuthenticated, (req, res) => {
-    renderProfile(req, res);
+app.get('/profile', isAuthenticated, async (req, res) => {
+    await renderProfile(req, res);
 
 });
 app.get('/avatar/:username', (req, res) => {
@@ -208,20 +201,19 @@ app.get('/logout', (req, res) => {
     logoutUser(req, res);
 });
 
-app.get('/popular', (req, res) => {
+app.get('/popular', async (req, res) => {
     const posts = getPopularPosts();
-    const user = getCurrentUser(req) || {};
+    const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
 });
 
 
-app.post('/delete/:id', isAuthenticated, (req, res) => {
+app.post('/delete/:id', isAuthenticated, async (req, res) => {
     // TODO: Delete a post if the current user is the owner
-    const user = getCurrentUser(req);
+    const user = await getCurrentUser(req);
     const loggedIn = req.session.loggedIn;
     const postId = req.params.id;
     let postIndex = posts.findIndex(post => post.id === parseInt(postId));
-    console.log(postIndex)
     
     for(let i = 0; i < posts.length; i++) {
         if(posts[i].id === parseInt(postId)) {
@@ -255,7 +247,14 @@ app.listen(PORT, () => {
 // Support Functions and Variables
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+async function connectDB() {
+    try {
+        const db = await sqlite.open({ filename: dbFileName, driver: sqlite3.Database });
+        return db
+    } catch (e) {
+        console.log("connectDB: Error trying to connect to db ", e)
+    }
+}
 
 // Example data for posts and users
 let posts = [
@@ -268,25 +267,54 @@ let users = [
 ];
 
 // Function to find a user by username
-function findUserByUsername(username) {
-    return users.find(user => user.username === username);
+async function findUserByUsername(username) {
+    try {
+        const db = await connectDB()
+        // const user = await db.get("SELECT * FROM users WHERE username = ?", [username])
+        // console.log(user)
+        // return user
+        return await db.get("SELECT * FROM users WHERE username = ?", [username])
+    } catch (e) {
+        console.log("findUserByUsername: Error finding ", username, e)
+    }
 }
+// findUserByUsername("hanlin487@gmail.com")
 
 // Function to find a user by user ID
-function findUserById(userId) {
+async function findUserById(userId) {
+    try {
+        const db = await connectDB()
+        // const user = await db.get("SELECT * FROM users WHERE id = ?", [userId])
+        // console.log(user)
+        // return user
+        return await db.get("SELECT * FROM users WHERE id = ?", [userId])
+    } catch (e) {
+        console.log("findUserById: Error finding ", userId, e)
+    }
     return users.find(user => user.id === userId);
 }
+// findUserById(1)
 
 // Function to add a new user
-function addUser(username) {
-    const newUser = { id: users.length + 1, username, avatar_url: undefined, memberSince: new Date().toISOString() };
-    users.push(newUser);
-    return newUser;
+async function addUser(username, hashedId) {
+    try {
+        const db = await connectDB()
+        const users = await db.all("SELECT * FROM users")
+        const newUser = { id: users.length + 1, username, hashedGoogleId: hashedId, avatar_url: undefined, memberSince: new Date().toISOString() };
+
+        await db.run(
+            "INSERT INTO users (username, hashedGoogleId, avatar_url, memberSince) VALUES (?, ?, ?, ?)",
+            [newUser.username, newUser.hashedGoogleId, newUser.avatar_url, newUser.memberSince]
+        )
+        return newUser;
+    } catch (e) { 
+        console.log("addUser error adding ", username, hashedId, e)
+    }
 }
+// addUser("TESTUSER", "1001")
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
-    console.log(req.session.userId);
     if (req.session.userId) {
         next();
     } else {
@@ -295,7 +323,7 @@ function isAuthenticated(req, res, next) {
 }
 
 // Function to register a user
-function registerUser(req, res) {
+async function registerUser(req, res) {
     const {username} = req.body;
     if (!username) {
         return res.redirect('/register?error=Username is required');
@@ -323,7 +351,6 @@ function loginUser(req, res) {
     req.session.userId = user.id;
     req.session.loggedIn = true;
     res.redirect('/');
-    //renderProfile(req, res);
 }
 
 // Function to logout a user
@@ -334,14 +361,14 @@ function logoutUser(req, res) {
 }
 
 // Function to render the profile page
-function renderProfile(req, res) {
-    const user = getCurrentUser(req);
+async function renderProfile(req, res) {
+    const user = await getCurrentUser(req);
+
     const userPosts = posts.filter(post => post.username === user.username);
     if (!user) {
         return res.status(403).send('Forbidden');
     }
     res.render('profile', {user, posts: userPosts});
-
 }
 
 // Function to update post likes
@@ -356,9 +383,9 @@ function updatePostLikes(req, res) {
 }
 
 // Function to handle avatar generation and serving
-function handleAvatar(req, res) {
+async function handleAvatar(req, res) {
     const username = req.params.username;
-    const user = findUserByUsername(username);
+    const user = await findUserByUsername(username);
     if (!user) {
         return res.status(404).send('User not found');
     }
@@ -368,32 +395,52 @@ function handleAvatar(req, res) {
 }
 
 // Function to get the current user from session
-function getCurrentUser(req) {
-    const userId = req.session.userId;
-    return findUserById(userId);
+async function getCurrentUser(req) {
+    const userId = await req.session.userId;
+    return await findUserById(userId);
 }
 
 // Function to get all posts, sorted by latest first
-function getPosts() {
-    return posts.slice().reverse();
+async function getPosts() {
+    try {
+        const db = await connectDB()
+        const posts = await db.all("SELECT * FROM posts ORDER BY id DESC")
+        return posts
+    } catch (e) {
+        console.log("getPosts error ", e)
+    }
 }
 
-function getPopularPosts() {
-    return posts.sort((a, b) => b.likes - a.likes);
+async function getPopularPosts() {
+    try {
+        const db = await connectDB()
+        const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC")
+        return posts
+    } catch (e) {
+        console.log("getPopularPosts error ", e)
+    }
 }
 
 // Function to add a new post
-function addPost(title, content, user) {
-    const newPost = {
-        id: posts.length + 1,
-        title,
-        content,
-        username: user.username,
-        timestamp: new Date().toLocaleDateString(),
-        likes: 0
-    };
-    posts.push(newPost);
-    return newPost;
+async function addPost(title, content, user) {
+    try {
+        const db = await connectDB()
+        const newPost = {
+            id: posts.length + 1,
+            title,
+            content,
+            username: user.username,
+            timestamp: new Date().toLocaleDateString(),
+            likes: 0
+        };
+        await db.run(
+            "INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)",
+            [newPost.title, newPost.content, newPost.username, newPost.timestamp, newPost.likes]
+        )
+        return newPost;
+    } catch (e) {
+        console.log("addPost error ", e)
+    }
 }
 
 // Function to generate an image avatar
@@ -446,3 +493,31 @@ function generateAvatar(letter, width = 100, height = 100) {
 
     return canvas.toBuffer();
 }
+
+async function initializeDB() {
+    const db = await connectDB()
+
+    await db.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            hashedGoogleId TEXT NOT NULL UNIQUE,
+            avatar_url TEXT,
+            memberSince DATETIME NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS posts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            username TEXT NOT NULL,
+            timestamp DATETIME NOT NULL,
+            likes INTEGER NOT NULL
+        );
+    `);
+    await db.close();
+}
+
+initializeDB().catch(err => {
+    console.error('Error initializing database:', err);
+});
