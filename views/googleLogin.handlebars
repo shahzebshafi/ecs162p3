@@ -1,0 +1,18 @@
+{{! Use the main layout }}
+{{!< main }}
+
+<section class="login-register">
+    <section class = "Google-Area">
+        <h2>Log in with Google OAuth</h2>
+        <!-- errors will appear here -->
+        {{#if regError}}
+            <p style="color: red;">{{regError}}</p>
+        {{/if}}
+        <form action="/auth/google" method="GET">
+            <button type="submit">
+                Login with Google
+                {{!-- <a href="/auth/google">Login with Google</a> --}}
+            </button>
+        </form>
+    </section>
+</section> 

@@ -138,16 +138,21 @@ app.get('/auth/google/callback', async (req, res) => {
     });
 
     const userinfo = await oauth2.userinfo.get();
-    let user = await findUserByUsername(userinfo.data.email);
+
+    let hash = await bcrypt.hash(userinfo.data.email, 10)
+    let user = await findUserByHash(userinfo.data.email);
+
     if (!user) {
-        user = addUser(userinfo.data.email, userinfo.data.id);
+        user = await addUser(userinfo.data.email, hash);
+        req.session.userId = user.id
+        res.redirect('/register')
     }
-    req.session.loggedIn = true;
-    req.session.userId = user.id;
-    res.redirect('/profile');
+    else {
+        req.session.loggedIn = true;
+        req.session.userId = user.id;
+        res.redirect('/');
+    }
 });
-
-
 
 // Register GET route is used for error response from registration
 //
@@ -158,7 +163,7 @@ app.get('/register', (req, res) => {
 // Login route GET route is used for error response from login
 //
 app.get('/login', (req, res) => {
-    res.render('loginRegister', { loginError: req.query.error });
+    res.render('googleLogin', { loginError: req.query.error });
 });
 
 // Error route: render error page
@@ -192,8 +197,7 @@ app.get('/avatar/:username', (req, res) => {
 
 });
 app.post('/register', (req, res) => {
-    registerUser(req, res);
-    
+    registerUser(req, res)
 });
 app.post('/login', (req, res) => {
     loginUser(req, res);
@@ -203,7 +207,7 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/popular', async (req, res) => {
-    const posts = getPopularPosts();
+    const posts = await getPopularPosts();
     const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
 });
@@ -266,44 +270,41 @@ async function connectDB() {
     }
 }
 
-// Example data for posts and users
-let posts = [
-    { id: 1, title: 'Sample Post', content: 'This is a sample post.', username: 'SampleUser', timestamp: '2024-01-01 10:00', likes: 0 },
-    { id: 2, title: 'Another Post', content: 'This is another sample post.', username: 'AnotherUser', timestamp: '2024-01-02 12:00', likes: 0 },
-];
-let users = [
-    { id: 1, username: 'SampleUser', avatar_url: undefined, memberSince: '2024-01-01 08:00' },
-    { id: 2, username: 'AnotherUser', avatar_url: undefined, memberSince: '2024-01-02 09:00' },
-];
-
 // Function to find a user by username
 async function findUserByUsername(username) {
     try {
         const db = await connectDB()
-        // const user = await db.get("SELECT * FROM users WHERE username = ?", [username])
-        // console.log(user)
-        // return user
         return await db.get("SELECT * FROM users WHERE username = ?", [username])
     } catch (e) {
         console.log("findUserByUsername: Error finding ", username, e)
     }
 }
-// findUserByUsername("hanlin487@gmail.com")
 
+async function findUserByHash(email) {
+    try {
+        const db = await connectDB()
+        const users = await db.all("SELECT * FROM users")
+        for (let user of users) {
+            const found = await bcrypt.compare(email, user.hashedGoogleId)
+            if (found) {
+                return user
+            }
+        }
+        return null
+    } catch (e) {
+        console.log("findUserByUsername: Error finding ", hash, e)
+    }
+}
 // Function to find a user by user ID
 async function findUserById(userId) {
     try {
         const db = await connectDB()
-        // const user = await db.get("SELECT * FROM users WHERE id = ?", [userId])
-        // console.log(user)
-        // return user
         return await db.get("SELECT * FROM users WHERE id = ?", [userId])
     } catch (e) {
         console.log("findUserById: Error finding ", userId, e)
     }
     return users.find(user => user.id === userId);
 }
-// findUserById(1)
 
 // Function to add a new user
 async function addUser(username, hashedId) {
@@ -321,7 +322,6 @@ async function addUser(username, hashedId) {
         console.log("addUser error adding ", username, hashedId, e)
     }
 }
-// addUser("TESTUSER", "1001")
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
@@ -334,23 +334,20 @@ function isAuthenticated(req, res, next) {
 
 // Function to register a user
 async function registerUser(req, res) {
+    console.log("from registerUser: ", req.session.userId)
     const {username} = req.body;
     if (!username) {
         return res.redirect('/register?error=Username is required');
     }
-    const db = await connectDB();
-    const existingUser = await db.get("SELECT * FROM users WHERE username = ?", [username]);
 
-    if (existingUser) {
-        return res.redirect('/register?error=User already exists');
+    let existing = await findUserByUsername(username)
+    if (existing) {
+        return res.redirect('register?error=Username already taken')
     }
-    const { count } = await db.get("SELECT COUNT(*) as count FROM users");
-    const newCount = count + 1;
-    const hashedID = await bcrypt.hash(newCount, 10)
+    const db = await connectDB();
 
+    db.run("UPDATE users SET username = ? WHERE id = ?", [username, req.session.userId])
 
-    const newUser = await addUser(username, hashedID);
-    req.session.userId = newUser.id;
     req.session.loggedIn = true;
     res.redirect('/');
 }
@@ -450,6 +447,7 @@ async function getPopularPosts() {
 async function addPost(title, content, user) {
     try {
         const db = await connectDB()
+        const posts = await db.all("SELECT * FROM posts")
         const newPost = {
             id: posts.length + 1,
             title,
