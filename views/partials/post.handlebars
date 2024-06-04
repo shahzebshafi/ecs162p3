@@ -6,6 +6,12 @@
     <div class="post-content preserve-newlines">
         <p>{{this.title}}</p>
         <p>{{this.content}}</p>
+        <div class = "post-tags">
+            <!-- the tags for the post -->
+            {{#each this.tags}}
+                <span class="tag">{{this}}</span>
+            {{/each}}
+        </div>
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
             <!-- Heart = ♥ -->
