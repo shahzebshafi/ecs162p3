@@ -327,7 +327,6 @@ function isAuthenticated(req, res, next) {
 
 // Function to register a user
 async function registerUser(req, res) {
-    console.log("from registerUser: ", req.session.userId)
     const {username} = req.body;
     if (!username) {
         return res.redirect('/register?error=Username is required');
