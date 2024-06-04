@@ -185,6 +185,8 @@ textarea[name="content"] {
 }
 
 
-
+.button-clicked {
+    background-color: green; /* Change to your desired color */
+}
 
 

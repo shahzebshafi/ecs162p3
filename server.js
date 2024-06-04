@@ -114,7 +114,8 @@ app.use(express.json());                            // Parse JSON bodies (as sen
 app.get('/', async (req, res) => {
     const posts = await getPosts();
     const user = await getCurrentUser(req) || {};
-    res.render('home', { posts, user });
+    const tags = ['popular', 'new', 'trending']
+    res.render('home', { posts, user , tags});
 
 });
 
@@ -183,7 +184,7 @@ app.get('/post/:id', (req, res) => {
     res.render('postDetail', { post });
 });
 app.post('/posts', async (req, res) => {
-    addPost(req.body.title, req.body.content, await getCurrentUser(req));
+    addPost(req.body.title, req.body.content ,req.body.tags ,await getCurrentUser(req));
     res.redirect('/');
 });
 app.post('/like/:id', (req, res) => {
@@ -213,6 +214,12 @@ app.get('/popular', async (req, res) => {
     res.render('home', { posts, user });
 });
 
+app.get('/tag/popular', async (req, res) => {
+    const tag = req.params.tag;
+    const posts = await getPostsByTag(tag);
+    const user = await getCurrentUser(req) || {};
+    res.render('home', { posts, user });
+});
 
 app.post('/delete/:id', isAuthenticated, async (req, res) => {
     const user = await getCurrentUser(req);
@@ -240,6 +247,8 @@ app.post('/delete/:id', isAuthenticated, async (req, res) => {
   
    
 });
+
+
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Server Activation
@@ -427,6 +436,9 @@ async function getPosts() {
     try {
         const db = await connectDB()
         const posts = await db.all("SELECT * FROM posts ORDER BY id DESC")
+        for (let post of posts) {
+            post.tags = post.tags.split(',')
+        }
         return posts
     } catch (e) {
         console.log("getPosts error ", e)
@@ -444,7 +456,7 @@ async function getPopularPosts() {
 }
 
 // Function to add a new post
-async function addPost(title, content, user) {
+async function addPost(title, content, tags , user) {
     try {
         const db = await connectDB()
         const posts = await db.all("SELECT * FROM posts")
@@ -454,15 +466,36 @@ async function addPost(title, content, user) {
             content,
             username: user.username,
             timestamp: new Date().toLocaleDateString(),
-            likes: 0
+            likes: 0,
+            tags
         };
         await db.run(
-            "INSERT INTO posts (title, content, username, timestamp, likes) VALUES (?, ?, ?, ?, ?)",
-            [newPost.title, newPost.content, newPost.username, newPost.timestamp, newPost.likes]
+            "INSERT INTO posts (title, content, username, timestamp, likes, tags) VALUES (?, ?, ?, ?, ?, ?)",
+            [newPost.title, newPost.content, newPost.username, newPost.timestamp, newPost.likes, newPost.tags]
         )
         return newPost;
     } catch (e) {
         console.log("addPost error ", e)
+    }
+}
+async function getPostsByTag(tag) {
+    try {
+        const db = await connectDB();
+        const posts = await db.all("SELECT * FROM posts");
+        const postsByTag = [];
+
+        
+        for (let post of posts) {
+            post.tags = post.tags.split(',')
+            if (post.tags.includes(tag)) {
+                postsByTag.push(post);
+            }
+        }
+        return postsByTag;
+
+        
+    } catch (e) {
+        console.log("getPostsByTag error ", e);
     }
 }
 
@@ -528,7 +561,8 @@ async function initializeDB() {
             content TEXT NOT NULL,
             username TEXT NOT NULL,
             timestamp DATETIME NOT NULL,
-            likes INTEGER NOT NULL
+            likes INTEGER NOT NULL,
+            tags TEXT
         );
     `);
     await db.close();
