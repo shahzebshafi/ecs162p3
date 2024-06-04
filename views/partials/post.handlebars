@@ -1,12 +1,11 @@
-{{! Partial for a single post }}
 <div class="post">
     <div class="post-avatar">
-        <!-- the user's avatar -->
+        <img src="/avatar/{{this.username}}" alt="">
     </div>
     <div class="post-content preserve-newlines">
         <p>{{this.title}}</p>
         <p>{{this.content}}</p>
-        <div class = "post-tags">
+        <div class="post-tags">
             <!-- the tags for the post -->
             {{#each this.tags}}
                 <span class="tag">{{this}}</span>
@@ -14,24 +13,46 @@
         </div>
         <div class="post-status-bar">
             <!-- everything that is shown in the status bar -->
-            <!-- Heart = ♥ -->
-            <!-- font awesome  trashcan = <i class="fas fa-trash-alt"> </i>-->
-            <button class="like-button" data-id="{{this.id}}" onclick="handleLikeClick(event)">♥ <span class ="likes-count">{{this.likes}}</span></button>
+            <button class="like-button" data-id="{{this.id}}" onclick="handleLikeClick(event)">♥ <span class="likes-count">{{this.likes}}</span></button>
             <button class="delete-button" data-id="{{this.id}}" onclick="handleDeleteClick(event)"><i class="fas fa-trash-alt"></i></button>
         </div>        
     </div>
+    
+    <div class="comments-section">
+        <h4>Comments</h4>
+        <div class="comments">
+            {{#each this.comments}}
+                <div class="comment">
+                    <p><strong>{{this.username}}:</strong> {{this.content}}</p>
+                    <p><small>{{this.timestamp}}</small></p>
+                </div>
+            {{/each}}
+        </div>
+        {{#if this.loggedIn}}
+        <form class="comment-form" action="/comments/{{this.id}}" method="POST">
+            <textarea name="content" required></textarea>
+            <button type="submit">Add Comment</button>
+        </form>
+        {{else}}
+        <p><a href="/login"><strong>Log in</strong></a> to comment.</p>
+        {{/if}}
+    </div>
 </div>
+
 <script>
     function handleLikeClick(event) {
-
         const postId = event.target.getAttribute('data-id');
         fetch(`/like/${postId}`, { method: 'POST'})
             .then(res => res.json())
+            .then(data => {
+                const likesCount = event.target.querySelector('.likes-count');
+                likesCount.textContent = data.likes;
+            });
     }
 
     function handleDeleteClick(event) {
         const buttonElement = event.target.closest('.delete-button');
-        const postId = event.target.getAttribute('data-id');       
+        const postId = buttonElement.getAttribute('data-id');       
 
         fetch(`/delete/${postId}`, { method: 'POST' })
             .then(() => {

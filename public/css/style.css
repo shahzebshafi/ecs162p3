@@ -130,6 +130,17 @@ footer {
     margin-bottom: 20px;
 }
 
+.post .post-avatar img{
+    border-radius: 50%;
+    width: 50px;
+    height: auto;
+}
+
+.post .comments-section textarea {
+    height: 50px;
+    width: 100%;
+}
+
 .profile-container{
     display: flex;
     align-items: center;

@@ -115,8 +115,12 @@ app.get('/', async (req, res) => {
     const posts = await getPosts();
     const user = await getCurrentUser(req) || {};
     const tags = ['popular', 'new', 'trending']
-    res.render('home', { posts, user , tags});
 
+    for (let post of posts) {
+        post.comments = await getComments(post.id);
+    }
+
+    res.render('home', { posts, user , tags});
 });
 
 // Redirect to Google's OAuth 2.0 server
@@ -183,6 +187,7 @@ app.get('/post/:id', (req, res) => {
     }
     res.render('postDetail', { post });
 });
+
 app.post('/posts', async (req, res) => {
     addPost(req.body.title, req.body.content ,req.body.tags ,await getCurrentUser(req));
     res.redirect('/');
@@ -216,6 +221,7 @@ app.get('/popular', async (req, res) => {
 
 app.get('/tag/:tag', async (req, res) => {
     const tag = req.params.tag;
+    console.log("selected tag: ", tag)
     const posts = await getPostsByTag(tag);
     const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
@@ -244,11 +250,22 @@ app.post('/delete/:id', isAuthenticated, async (req, res) => {
     await db.run("DELETE FROM posts WHERE id = ?", [postId]);
 
     res.send('Post deleted');
-  
-   
 });
 
+app.get('/comments/:postId', async (req, res) => {
+    const postId = req.params.postId;
+    const comments = await getComments(postId);
+    res.json(comments);
+});
 
+app.post('/comments/:postId', isAuthenticated, async (req, res) => {
+    const postId = req.params.postId;
+    const user = await getCurrentUser(req);
+    const { content } = req.body;
+
+    await addComment(postId, user.username, content);
+    res.redirect('/');
+});
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Server Activation
@@ -535,6 +552,29 @@ function generateAvatar(letter, width = 100, height = 100) {
     return canvas.toBuffer();
 }
 
+async function getComments(postId) {
+    try {
+        const db = await connectDB();
+        const comments = await db.all("SELECT * FROM comments WHERE postId = ? ORDER BY timestamp DESC", [postId]);
+        return comments;
+    } catch (e) {
+        console.log("getComments error ", e);
+    }
+}
+
+async function addComment(postId, username, content) {
+    try {
+        const db = await connectDB();
+        const timestamp = new Date().toISOString();
+        await db.run(
+            "INSERT INTO comments (postId, username, content, timestamp) VALUES (?, ?, ?, ?)",
+            [postId, username, content, timestamp]
+        );
+    } catch (e) {
+        console.log("addComment error ", e);
+    }
+}
+
 async function initializeDB() {
     const db = await connectDB()
 
@@ -555,6 +595,15 @@ async function initializeDB() {
             timestamp DATETIME NOT NULL,
             likes INTEGER NOT NULL,
             tags TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            postId INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp DATETIME NOT NULL,
+            FOREIGN KEY (postId) REFERENCES posts(id)
         );
     `);
     await db.close();

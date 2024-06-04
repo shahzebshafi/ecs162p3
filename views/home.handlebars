@@ -46,7 +46,7 @@
 
     <section class="posts-list">
         <!-- recent posts -->
-       <a href = "/" <button id ="recent-post">Recent Posts</button></a>
+        <a href = "/" <button id ="recent-post">Recent Posts</button></a>
         <a href = "/popular"<button id ="popular-post">Popular Posts</button></a>
         <div class = "dropdown">
             <button type = "button" class = "tagbuttonsort" onclick = "toggleTags(event)">Select Tags</button>
@@ -65,7 +65,7 @@
         <ul>
             {{#each posts}}
                 <!-- you have to pass the user in to posts and this is the syntax -->
-                {{> post this user=../user}}            
+                    {{> post this user=../user loggedIn=../loggedIn}}
             {{/each}}
         </ul>
         {{else}}
@@ -142,7 +142,7 @@ function insertEmoji(emoji) {
 
 <script>
 document.getElementById("popular-post").addEventListener("click", function(){
-    fetch('/posts/popular')
+    fetch('/popular')
     .then(res => res.json())
     });
 
