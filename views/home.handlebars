@@ -55,7 +55,7 @@
                 <input type = "hidden" name = "tags">
                 {{#if tags}}
                     {{#each tags}}
-                        <a href = "/tags/{{this}}"><button type = "button" class = "tags">{{this}}</button></a>
+                        <a href = "/tag/{{this}}"<button id = "tag-sort" class = "tags">{{this}}</button></a>
                     {{/each}}
                 {{/if}}
             </div>

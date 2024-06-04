@@ -214,7 +214,7 @@ app.get('/popular', async (req, res) => {
     res.render('home', { posts, user });
 });
 
-app.get('/tag/popular', async (req, res) => {
+app.get('/tag/:tag', async (req, res) => {
     const tag = req.params.tag;
     const posts = await getPostsByTag(tag);
     const user = await getCurrentUser(req) || {};
@@ -482,15 +482,7 @@ async function getPostsByTag(tag) {
     try {
         const db = await connectDB();
         const posts = await db.all("SELECT * FROM posts");
-        const postsByTag = [];
-
-        
-        for (let post of posts) {
-            post.tags = post.tags.split(',')
-            if (post.tags.includes(tag)) {
-                postsByTag.push(post);
-            }
-        }
+        const postsByTag = posts.filter(post => post.tags.includes(tag));
         return postsByTag;
 
         
