@@ -31,7 +31,7 @@
         {{#if this.loggedIn}}
         <form class="comment-form" action="/comments/{{this.id}}" method="POST">
             <textarea name="content" required></textarea>
-            <button type="submit">Add Comment</button>
+            <button type="submit" class="comment-button">Add Comment</button>
         </form>
         {{else}}
         <p><a href="/login"><strong>Log in</strong></a> to comment.</p>

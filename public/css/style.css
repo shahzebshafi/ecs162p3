@@ -183,7 +183,7 @@ textarea[name="content"] {
     cursor: pointer;
 }
 
-.like-button, .delete-button, .tagbutton, #recent-post, #popular-post{
+.like-button, .delete-button, .tagbutton, #recent-post, #popular-post, .comment-button{
     padding: 5px 10px;
     margin: 5px;
     color: white;
@@ -206,7 +206,7 @@ textarea[name="content"] {
 
 }
 
-.like-button:hover, .delete-button:hover, .emoji-button:hover, .post-button:hover, .tagbutton:hover, .tagbuttonsort:hover{
+.like-button:hover, .delete-button:hover, .emoji-button:hover, .post-button:hover, .tagbutton:hover, .tagbuttonsort:hover, #recent-post:hover, #popular-post:hover, .comment-button:hover{
     background-color: slategray;
 }
 
