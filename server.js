@@ -221,7 +221,6 @@ app.get('/popular', async (req, res) => {
 
 app.get('/tag/:tag', async (req, res) => {
     const tag = req.params.tag;
-    console.log("selected tag: ", tag)
     const posts = await getPostsByTag(tag);
     const user = await getCurrentUser(req) || {};
     res.render('home', { posts, user });
