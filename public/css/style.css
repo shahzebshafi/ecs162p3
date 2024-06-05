@@ -223,6 +223,7 @@ textarea[name="content"] {
     margin: 5px;
     border: 1px solid black;
     border-style: inset;
+    background-color: rgb(43, 64, 86);
 }
 
 

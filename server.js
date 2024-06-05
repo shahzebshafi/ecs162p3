@@ -225,7 +225,8 @@ app.get('/tag/:tag', async (req, res) => {
     console.log("selected tag: ", tag)
     const posts = await getPostsByTag(tag);
     const user = await getCurrentUser(req) || {};
-    res.render('home', { posts, user, tags: [tag]});
+    const tags = ['popular', 'new', 'trending']
+    res.render('home', { posts, user, tags});
 });
 
 app.post('/delete/:id', isAuthenticated, async (req, res) => {
