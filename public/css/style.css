@@ -183,7 +183,7 @@ textarea[name="content"] {
     cursor: pointer;
 }
 
-.like-button, .delete-button{
+.like-button, .delete-button, .tagbutton, #recent-post, #popular-post{
     padding: 5px 10px;
     margin: 5px;
     color: white;
@@ -191,13 +191,41 @@ textarea[name="content"] {
     cursor: pointer;
 }
 
-.like-button:hover, .delete-button:hover, .emoji-button:hover, .post-button:hover{
+.tagbuttonsort{
+    padding: 5px 10px;
+    margin: 20px 10px 9.5px 10px ;
+    color: white;
+    background-color: dimgray;
+    cursor: pointer;
+}
+.tags{
+    padding: 5px 10px;
+    margin: 2.5px;
+    color: white;
+    background-color: lightsteelblue;
+
+}
+
+.like-button:hover, .delete-button:hover, .emoji-button:hover, .post-button:hover, .tagbutton:hover, .tagbuttonsort:hover{
     background-color: slategray;
 }
 
 
-.button-clicked {
-    background-color: green; /* Change to your desired color */
+
+
+.button-clicked, .tags:hover {
+    background-color: steelblue; /* Change to your desired color */
 }
+
+.tag{
+    display: inline-block;
+    padding: 5px 10px;
+    margin: 5px;
+    border: 1px solid black;
+    border-style: inset;
+}
+
+
+
 
 
