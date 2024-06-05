@@ -216,14 +216,16 @@ app.get('/logout', (req, res) => {
 app.get('/popular', async (req, res) => {
     const posts = await getPopularPosts();
     const user = await getCurrentUser(req) || {};
-    res.render('home', { posts, user });
+    const tags = ['popular', 'new', 'trending']
+    res.render('home', { posts, user , tags});
 });
 
 app.get('/tag/:tag', async (req, res) => {
     const tag = req.params.tag;
     const posts = await getPostsByTag(tag);
     const user = await getCurrentUser(req) || {};
-    res.render('home', { posts, user });
+    const tags = ['popular', 'new', 'trending']
+    res.render('home', { posts, user, tags});
 });
 
 app.post('/delete/:id', isAuthenticated, async (req, res) => {
@@ -465,6 +467,9 @@ async function getPopularPosts() {
     try {
         const db = await connectDB()
         const posts = await db.all("SELECT * FROM posts ORDER BY likes DESC, id DESC")
+        for (let post of posts) {
+            post.tags = post.tags.split(',')
+        }
         return posts
     } catch (e) {
         console.log("getPopularPosts error ", e)
@@ -499,6 +504,9 @@ async function getPostsByTag(tag) {
         const db = await connectDB();
         const posts = await db.all("SELECT * FROM posts");
         const postsByTag = posts.filter(post => post.tags.includes(tag));
+        for (let post of posts) {
+            post.tags = post.tags.split(',')
+        }
         return postsByTag;
 
         
